@@ -4,23 +4,38 @@ import re
 
 class SpiderMain(object):
 	"""docstring for SpiderMain"""
-	#def __init__(self):
-		
+	def __init__(self):
+		self.datas = []
+	
 	def crawl(self, url):
 		html_content = self.download(url)
 		soup = BeautifulSoup(html_content, 'html.parser', from_encoding='utf-8')
 		urls = self.get_urls(url,soup)
 		i=1
-		fout = open('output.html', 'w', encoding="utf-8")
 		for url in urls:
 			html_content = self.download(url)
 			soup = BeautifulSoup(html_content, 'html.parser', from_encoding='utf-8')
-			data = self.get_data(soup)
-			fout.write(data)
-			fout.write("<br>")
+			data = self.get_data(url,soup)
+			self.collect_data(data)
 			if i==10:
 				break
 			i = i+1
+		self.output_html()
+		
+	def collect_data(self,data):
+		if data is None:
+			return
+		self.datas.append(data)
+
+	def output_html(self):
+		fout = open('output.html', 'w', encoding="utf-8")
+		for data in self.datas:
+			fout.write("<a href='")
+			fout.write(data['url'])
+			fout.write("'>")
+			fout.write(data['title'])
+			fout.write("</a>")
+			fout.write("<br>")
 		fout.close()
 
 	#下载此url内容
@@ -31,10 +46,12 @@ class SpiderMain(object):
 		return response.read()
 
 	#获取需要的数据
-	def get_data(self,soup):
+	def get_data(self,url,soup):
 		title_node = soup.find('dd', class_="lemmaWgt-lemmaTitle-title").find('h1')
-		title = title_node.get_text()
-		return title
+		data = {}
+		data['title'] = title_node.get_text()
+		data['url']   = url
+		return data
 
 	def get_urls(self,url,soup):
 		new_urls = set()
